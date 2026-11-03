@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Houston City Guide"
+description = "A phone-friendly one-page guide to Houston, Texas, featuring its food, quick facts, state bird, local leader, and an interactive personal list."
+version = "1.0.0"
+id = "artifacts/houston-city-guide"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18622
+
+[services.development]
+run = "pnpm --filter @workspace/houston-city-guide run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/houston-city-guide", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/houston-city-guide/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18622"
+BASE_PATH = "/"

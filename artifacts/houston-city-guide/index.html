@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A pocket-sized field guide to Houston, Texas: its people, food, and unmistakable local flavor.">
+    <meta name="theme-color" content="#f5f0e6">
+    <title>Houston, in good company — City Guide</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <script src="./script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to guide</a>
+
+    <header class="topbar">
+      <a class="wordmark" href="#top" aria-label="Houston City Guide home">
+        <span class="wordmark-mark" aria-hidden="true">H</span>
+        <span>HOUSTON<br><small>CITY GUIDE</small></span>
+      </a>
+      <nav class="top-nav" aria-label="Main navigation">
+        <a href="#food">Food</a>
+        <a href="#facts">Fast facts</a>
+        <a href="#likes">Your list</a>
+      </nav>
+      <a class="top-note" href="#about">A city with room for everyone <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> TEXAS, USA <span class="eyebrow-divider">/</span> 29.7604° N, 95.3698° W</p>
+          <h1 id="hero-title">Houston,<br><em>in good</em><br>company.</h1>
+          <p class="hero-intro">Big-hearted, many-flavored, and always a little surprising. Start here, then make the city your own.</p>
+          <a class="hero-link" href="#food"><span>Meet the local flavor</span><span class="arrow" aria-hidden="true">↓</span></a>
+        </div>
+        <div class="hero-art" aria-label="Illustrated Houston skyline and Texas star">
+          <div class="sun-disc"></div>
+          <div class="skyline-label">THE BAYOU CITY <span>EST. 1836</span></div>
+          <svg class="skyline" viewBox="0 0 640 420" role="img" aria-label="A warm, graphic illustration of Houston's downtown skyline">
+            <path class="skyline-bayou" d="M0 333c79-30 114 16 191-8s131-30 204-9 148 27 245-2v106H0z"/>
+            <path class="building building-a" d="M69 179h61v174H69zM77 153h45v26H77zM84 128h31v25H84z"/>
+            <path class="building building-b" d="M150 221h58v132h-58zM162 184h33v37h-33zM170 143h17v41h-17z"/>
+            <path class="building building-c" d="M220 119h83v234h-83zM232 91h58v28h-58zM246 65h30v26h-30z"/>
+            <path class="building building-d" d="M312 172h74v181h-74zM326 142h46v30h-46zM339 108h19v34h-19z"/>
+            <path class="building building-e" d="M401 205h56v148h-56zM410 172h39v33h-39z"/>
+            <path class="building building-f" d="M475 153h80v200h-80zM491 117h47v36h-47zM504 77h21v40h-21z"/>
+            <path class="building building-g" d="M568 235h45v118h-45z"/>
+            <path class="horizon" d="M32 354h586"/>
+            <path class="windows" d="M82 196h11v11H82zm22 0h11v11h-11zm-22 25h11v11H82zm22 0h11v11h-11zm-22 25h11v11H82zm22 0h11v11h-11zm143-129h12v12h-12zm24 0h12v12h-12zm-39 26h12v12h-12zm24 0h12v12h-12zm24 0h12v12h-12zm-39 26h12v12h-12zm24 0h12v12h-12zm24 0h12v12h-12zm-39 26h12v12h-12zm24 0h12v12h-12zm24 0h12v12h-12zm-39 26h12v12h-12zm24 0h12v12h-12zm24 0h12v12h-12zm-39 26h12v12h-12zm24 0h12v12h-12zm24 0h12v12h-12zm49-160h12v12h-12zm24 0h12v12h-12zm-24 25h12v12h-12zm24 0h12v12h-12zm-24 25h12v12h-12zm24 0h12v12h-12zm-24 25h12v12h-12zm24 0h12v12h-12zm-24 25h12v12h-12zm24 0h12v12h-12zm-24 25h12v12h-12zm24 0h12v12h-12zm73-70h12v12h-12zm24 0h12v12h-12zm-24 25h12v12h-12zm24 0h12v12h-12zm-24 25h12v12h-12zm24 0h12v12h-12zm-24 25h12v12h-12zm24 0h12v12h-12zm-24 25h12v12h-12zm24 0h12v12h-12z"/>
+            <path class="star" d="m590 32 6 17 18 1-14 11 5 17-15-10-15 10 5-17-14-11 18-1z"/>
+          </svg>
+          <div class="art-caption"><span>01 — CITY NOTES</span><span>Scroll to explore ↓</span></div>
+          <span class="art-sticker">Howdy,<br>neighbor.</span>
+        </div>
+        <div class="hero-bottomline"><span>MORE THAN A DOT ON THE MAP</span><span>HOUSTON IS A FEELING →</span></div>
+      </section>
+
+      <section class="food-section section-shell" id="food" aria-labelledby="food-title">
+        <div class="section-heading">
+          <p class="eyebrow">01 / THE TABLE</p>
+          <h2 id="food-title">Come hungry.<br><em>Leave a local.</em></h2>
+          <p class="section-intro">In Houston, the best introductions happen over a shared table. Our food is a map of the people who call this place home.</p>
+          <a class="text-link" href="#facts">A few things to know <span aria-hidden="true">↘</span></a>
+        </div>
+        <article class="food-card">
+          <div class="food-photo-wrap">
+            <img src="./images/houston-viet-cajun-crawfish.jpg" alt="A paper-lined table piled high with spicy Viet-Cajun crawfish and fresh lemon" class="food-photo">
+            <span class="photo-index">H-TOWN FAVORITE&nbsp; / &nbsp;01</span>
+          </div>
+          <div class="food-caption">
+            <div>
+              <p class="eyebrow">GULF COAST × GULF COAST</p>
+              <h3>Viet-Cajun<br>crawfish</h3>
+            </div>
+            <p>Louisiana spice meets Vietnamese aromatics: crawfish tossed in garlicky, buttery seasoning, best eaten with your hands and people you like.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="facts-section" id="facts" aria-labelledby="facts-title">
+        <div class="facts-inner">
+          <div class="facts-heading">
+            <p class="eyebrow">02 / THE QUICK READ</p>
+            <h2 id="facts-title">Houston,<br><em>by the numbers.</em></h2>
+          </div>
+          <ul class="facts-list">
+            <li><span class="fact-number">01</span><span class="fact-copy"><strong>Space City</strong><small>Our nickname reaches for the stars.</small></span><span class="fact-aside">NICKNAME</span></li>
+            <li><span class="fact-number">02</span><span class="fact-copy"><strong>2,390,125</strong><small>People call Houston home.</small></span><span class="fact-aside">U.S. CENSUS<br>2024 ESTIMATE</span></li>
+            <li><span class="fact-number">03</span><span class="fact-copy"><strong>1845</strong><small>Texas became a state.</small></span><span class="fact-aside">TEXAS<br>STATEHOOD</span></li>
+          </ul>
+        </div>
+        <div class="facts-marquee" aria-hidden="true"><span>MADE OF MANY STORIES&nbsp; · &nbsp;MADE OF MANY STORIES&nbsp; · &nbsp;MADE OF MANY STORIES&nbsp; · &nbsp;</span></div>
+      </section>
+
+      <section class="people-section section-shell" id="about" aria-label="People and symbols of Texas">
+        <article class="leader-card">
+          <div class="leader-top"><p class="eyebrow">03 / CITY HALL</p><span class="corner-mark" aria-hidden="true">✶</span></div>
+          <p class="leader-kicker">A city is its people.<br>And the person at the helm is</p>
+          <h2>John<br>Whitmire<span>.</span></h2>
+          <p class="leader-role">Mayor of Houston</p>
+          <div class="leader-footer"><span>HOUSTON, TEXAS</span><span>THE 63RD MAYOR →</span></div>
+        </article>
+        <article class="bird-card">
+          <div class="bird-info">
+            <p class="eyebrow">04 / STATE SYMBOL</p>
+            <h2>A voice<br>all its <em>own.</em></h2>
+            <p>The northern mockingbird is Texas's state bird—famous for borrowing the songs of others and making them unmistakably its own.</p>
+            <button class="bird-prompt" type="button" aria-label="Make the mockingbird shake">Give it a little click <span aria-hidden="true">↗</span></button>
+          </div>
+          <button class="bird-image-button" type="button" aria-label="Make the northern mockingbird shake">
+            <img class="bird" src="./images/texas-northern-mockingbird.jpg" alt="A northern mockingbird perched on a branch among green leaves">
+          </button>
+          <p class="bird-caption">THE TEXAS NORTHERN MOCKINGBIRD <span>STATE BIRD SINCE 1927</span></p>
+        </article>
+      </section>
+
+      <section class="likes-section" id="likes" aria-labelledby="likes-title">
+        <div class="likes-grid">
+          <div class="likes-intro">
+            <p class="eyebrow">05 / YOUR HOUSTON</p>
+            <h2 id="likes-title">What do <em>you</em><br>like about it?</h2>
+            <p>Make this guide yours. Keep a little list of the places, bites, and moments you want to remember.</p>
+          </div>
+          <div class="likes-board">
+            <form class="like-form" id="like-form">
+              <label for="like-input">Add a note to your Houston list</label>
+              <div class="input-row">
+                <input id="like-input" name="like" type="text" maxlength="100" placeholder="A late-night taco stop…" autocomplete="off">
+                <button type="submit">Add <span aria-hidden="true">+</span></button>
+              </div>
+            </form>
+            <p class="list-label">YOUR NOTES <span id="item-count">0 ITEMS</span></p>
+            <ul class="likes-list" id="likes-list" aria-live="polite" aria-relevant="additions removals"></ul>
+            <p class="list-empty" id="list-empty">Your list is a blank page. Give it a good first line.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <a class="wordmark footer-mark" href="#top"><span class="wordmark-mark" aria-hidden="true">H</span><span>HOUSTON<br><small>CITY GUIDE</small></span></a>
+      <p>Big city. Open arms.<br><span>Made for finding your way around.</span></p>
+      <a class="back-top" href="#top">BACK TO THE TOP <span aria-hidden="true">↑</span></a>
+    </footer>
+  </body>
+</html>
