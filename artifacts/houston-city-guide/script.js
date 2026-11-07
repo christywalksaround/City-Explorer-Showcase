@@ -64,3 +64,178 @@ bird.addEventListener("animationend", () => {
 });
 
 updateListStatus();
+
+// The conversation lives only for this visit; each turn sends prior successful turns.
+const chatForm = document.querySelector("#chat-form");
+const chatInput = document.querySelector("#chat-input");
+const chatTranscript = document.querySelector("#chat-transcript");
+const chatStatus = document.querySelector("#chat-status");
+const chatSend = document.querySelector("#chat-send");
+const temperatureInput = document.querySelector("#temperature");
+const topPInput = document.querySelector("#top-p");
+const maxTokensInput = document.querySelector("#max-output-tokens");
+const systemPromptDetails = document.querySelector(".system-prompt");
+const systemPromptContent = document.querySelector("#system-prompt-content");
+const conversationHistory = [];
+let systemPromptLoaded = false;
+
+function currentSettings() {
+  return {
+    temperature: Number(temperatureInput.value),
+    topP: Number(topPInput.value),
+    maxOutputTokens: Number(maxTokensInput.value),
+  };
+}
+
+function updateSettingReadouts() {
+  document.querySelector("#temperature-value").value = Number(temperatureInput.value).toFixed(2);
+  document.querySelector("#top-p-value").value = Number(topPInput.value).toFixed(2);
+  document.querySelector("#max-output-tokens-value").value = maxTokensInput.value;
+}
+
+[temperatureInput, topPInput, maxTokensInput].forEach((input) => {
+  input.addEventListener("input", updateSettingReadouts);
+});
+updateSettingReadouts();
+
+function addMessage(role, content, metadata = null, wasCutOff = false) {
+  const message = document.createElement("article");
+  message.className = `chat-message ${role === "user" ? "user-message" : "assistant-message"}`;
+
+  const byline = document.createElement("span");
+  byline.className = "message-byline";
+  byline.textContent = role === "user" ? "YOU, IN HOUSTON" : "HOUSTON CITY GUIDE";
+
+  const body = document.createElement("p");
+  body.textContent = content;
+  message.append(byline, body);
+
+  if (metadata) {
+    const meta = document.createElement("div");
+    meta.className = "answer-meta";
+    const settingSummary = metadata.settings
+      ? `TEMP ${metadata.settings.temperature} · TOP-P ${metadata.settings.topP} · MAX ${metadata.settings.maxOutputTokens}`
+      : "Settings unavailable";
+    const usage = metadata.usage || {};
+    [
+      `MODEL ${metadata.model || "Unknown"}`,
+      settingSummary,
+      `TOKENS IN ${usage.promptTokens ?? "—"} · OUT ${usage.outputTokens ?? "—"} · TOTAL ${usage.totalTokens ?? "—"}`,
+      metadata.finishReason ? `FINISH ${metadata.finishReason}` : "",
+    ].filter(Boolean).forEach((label) => {
+      const item = document.createElement("span");
+      item.textContent = label;
+      meta.append(item);
+    });
+    message.append(meta);
+  }
+
+  if (wasCutOff) {
+    const cutoff = document.createElement("p");
+    cutoff.className = "answer-cutoff";
+    cutoff.textContent = "This answer may have been cut short. Try asking for a shorter answer or raise the output limit in Prompt Lab.";
+    message.append(cutoff);
+  }
+
+  chatTranscript.append(message);
+  chatTranscript.scrollTop = chatTranscript.scrollHeight;
+}
+
+chatForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = chatInput.value.trim();
+  if (!message || chatSend.disabled) {
+    if (!message) chatInput.focus();
+    return;
+  }
+
+  addMessage("user", message);
+  chatInput.value = "";
+  chatSend.disabled = true;
+  chatStatus.className = "chat-status is-loading";
+  chatStatus.textContent = "Finding a local answer...";
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        // Keep the request within the API contract while preserving recent context.
+        history: conversationHistory.slice(-40),
+        settings: currentSettings(),
+      }),
+    });
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error("The guide sent an unreadable response. Please try again.");
+    }
+    if (!response.ok) {
+      throw new Error(typeof result.error === "string" ? result.error : "The city guide could not answer just now.");
+    }
+    if (typeof result.reply !== "string") {
+      throw new Error("The city guide sent an incomplete answer. Please try again.");
+    }
+
+    addMessage(
+      "assistant",
+      result.reply,
+      result,
+      String(result.finishReason || "").toUpperCase().replace(/[-\s]/g, "_").includes("MAX_TOKENS"),
+    );
+    conversationHistory.push(
+      { role: "user", content: message },
+      { role: "assistant", content: result.reply },
+    );
+    chatStatus.className = "chat-status";
+    chatStatus.textContent = "";
+  } catch (error) {
+    chatStatus.className = "chat-status";
+    chatStatus.textContent = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+  } finally {
+    chatSend.disabled = false;
+    chatInput.focus();
+  }
+});
+
+chatInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    chatForm.requestSubmit();
+  }
+});
+
+systemPromptDetails.addEventListener("toggle", async () => {
+  if (!systemPromptDetails.open || systemPromptLoaded) return;
+  systemPromptContent.replaceChildren();
+  const loading = document.createElement("p");
+  loading.textContent = "Loading the field notes...";
+  systemPromptContent.append(loading);
+
+  try {
+    const response = await fetch("/api/chat/system-prompt");
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error("The field notes could not be read.");
+    }
+    if (!response.ok) {
+      throw new Error(typeof result.error === "string" ? result.error : "The field notes are unavailable right now.");
+    }
+    if (typeof result.systemPrompt !== "string") {
+      throw new Error("The field notes came back in an unexpected format.");
+    }
+    const prompt = document.createElement("p");
+    prompt.textContent = result.systemPrompt;
+    systemPromptContent.replaceChildren(prompt);
+    systemPromptLoaded = true;
+  } catch (error) {
+    const failure = document.createElement("p");
+    failure.className = "system-prompt-error";
+    failure.textContent = error instanceof Error ? error.message : "Unable to load the city guide's instructions. Close this panel and try again.";
+    systemPromptContent.replaceChildren(failure);
+  }
+});

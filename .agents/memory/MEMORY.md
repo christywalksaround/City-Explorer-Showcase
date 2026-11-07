@@ -1,0 +1,1 @@
+- [Gemini model selection](gemini-model-selection.md) — validate model IDs against the direct Google API key and preserve the `GEMINI_MODEL` override.

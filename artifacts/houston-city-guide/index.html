@@ -24,6 +24,7 @@
       <nav class="top-nav" aria-label="Main navigation">
         <a href="#food">Food</a>
         <a href="#facts">Fast facts</a>
+        <a href="#city-guide-chat">Ask a local</a>
         <a href="#likes">Your list</a>
       </nav>
       <a class="top-note" href="#about">A city with room for everyone <span aria-hidden="true">↗</span></a>
@@ -137,6 +138,70 @@
             <ul class="likes-list" id="likes-list" aria-live="polite" aria-relevant="additions removals"></ul>
             <p class="list-empty" id="list-empty">Your list is a blank page. Give it a good first line.</p>
           </div>
+        </div>
+      </section>
+
+      <section class="chat-section" id="city-guide-chat" aria-labelledby="chat-title">
+        <div class="chat-heading">
+          <p class="eyebrow">06 / THE LOCAL LINE</p>
+          <h2 id="chat-title">Houston has<br><em>answers.</em></h2>
+          <p>Ask about the city, its neighborhoods, or what to try next. Think of this as a good local with time for one more question.</p>
+          <div class="chat-side-note"><span class="chat-side-mark" aria-hidden="true">H</span><span>FIELD NOTES<br>FROM HOUSTON</span></div>
+        </div>
+
+        <div class="chat-workspace">
+          <div class="chat-panel">
+            <div class="chat-panel-top">
+              <div><span class="chat-status-dot" aria-hidden="true"></span><span>THE CITY GUIDE</span></div>
+              <span class="chat-panel-label">HERE TO HELP</span>
+            </div>
+            <div class="chat-transcript" id="chat-transcript" role="log" aria-label="Conversation with the Houston city guide" aria-live="polite" aria-relevant="additions text">
+              <article class="chat-message assistant-message">
+                <span class="message-byline">HOUSTON CITY GUIDE</span>
+                <p>Well, hey. What would you like to know about Houston?</p>
+              </article>
+            </div>
+            <p class="chat-status" id="chat-status" role="status" aria-live="polite"></p>
+            <form class="chat-form" id="chat-form">
+              <label for="chat-input">Your question</label>
+              <div class="chat-input-row">
+                <textarea id="chat-input" name="message" rows="2" maxlength="1200" placeholder="Where should I go for a great first meal?" required></textarea>
+                <button class="chat-send" id="chat-send" type="submit"><span>Ask the guide</span><span aria-hidden="true">↗</span></button>
+              </div>
+              <p class="chat-hint">Enter to ask · Shift + Enter for a new line</p>
+            </form>
+          </div>
+
+          <aside class="prompt-lab" aria-labelledby="prompt-lab-title">
+            <div class="lab-heading">
+              <p class="eyebrow">TUNE THE ANSWER</p>
+              <h3 id="prompt-lab-title">Prompt Lab</h3>
+              <p>A little control over how your local thinks out loud.</p>
+            </div>
+            <div class="lab-controls">
+              <div class="lab-control">
+                <div class="lab-label-row"><label for="temperature">Temperature</label><output id="temperature-value" for="temperature">1.00</output></div>
+                <input id="temperature" type="range" min="0" max="2" step="0.01" value="1">
+                <div class="range-ends"><span>Focused</span><span>Inventive</span></div>
+              </div>
+              <div class="lab-control">
+                <div class="lab-label-row"><label for="top-p">Top-p</label><output id="top-p-value" for="top-p">0.95</output></div>
+                <input id="top-p" type="range" min="0" max="1" step="0.01" value="0.95">
+                <div class="range-ends"><span>Narrow</span><span>Wide</span></div>
+              </div>
+              <div class="lab-control">
+                <div class="lab-label-row"><label for="max-output-tokens">Max output tokens</label><output id="max-output-tokens-value" for="max-output-tokens">300</output></div>
+                <input id="max-output-tokens" type="range" min="32" max="1024" step="1" value="300">
+                <div class="range-ends"><span>32</span><span>1024</span></div>
+              </div>
+            </div>
+            <details class="system-prompt">
+              <summary>Read the guide's field notes</summary>
+              <div class="system-prompt-content" id="system-prompt-content" aria-live="polite">
+                <p class="system-prompt-placeholder">Open to load the city guide's instructions.</p>
+              </div>
+            </details>
+          </aside>
         </div>
       </section>
     </main>
