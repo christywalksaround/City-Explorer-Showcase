@@ -141,8 +141,7 @@ function addMessage(role, content, metadata = null, wasCutOff = false) {
   chatTranscript.scrollTop = chatTranscript.scrollHeight;
 }
 
-chatForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function askCityGuide() {
   const message = chatInput.value.trim();
   if (!message || chatSend.disabled) {
     if (!message) chatInput.focus();
@@ -198,12 +197,21 @@ chatForm.addEventListener("submit", async (event) => {
     chatSend.disabled = false;
     chatInput.focus();
   }
+}
+
+// The button is type="button", so clicking it can never reload the page.
+chatSend.addEventListener("click", askCityGuide);
+
+// Keep form submission safe for assistive technology and browser shortcuts.
+chatForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  askCityGuide();
 });
 
 chatInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
-    chatForm.requestSubmit();
+    askCityGuide();
   }
 });
 
