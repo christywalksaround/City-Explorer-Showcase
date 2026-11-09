@@ -8,6 +8,7 @@ import { Router, type IRouter } from "express";
 import { buildCityGuideSystemPrompt, cityGuideSettings } from "../city";
 
 const router: IRouter = Router();
+const GEMINI_MODEL_TIMEOUT_MS = 10_000;
 
 router.get("/chat/system-prompt", (_req, res): void => {
   const response = GetCityGuideSystemPromptResponse.parse({
@@ -67,6 +68,7 @@ router.post("/chat", async (req, res): Promise<void> => {
       | undefined;
 
     for (const [index, model] of models.entries()) {
+      const requestSignal = AbortSignal.timeout(GEMINI_MODEL_TIMEOUT_MS);
       try {
         result = await ai.models.generateContent({
           model,
@@ -78,6 +80,8 @@ router.post("/chat", async (req, res): Promise<void> => {
             maxOutputTokens: settings.maxOutputTokens,
             // Keep this lightweight city-guide chat from spending the answer budget on reasoning.
             thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+            abortSignal: requestSignal,
+            httpOptions: { timeout: GEMINI_MODEL_TIMEOUT_MS },
           },
         });
         modelUsed = model;
@@ -87,12 +91,21 @@ router.post("/chat", async (req, res): Promise<void> => {
           typeof error === "object" && error !== null
             ? (error as { status?: unknown }).status
             : undefined;
+        const timedOut =
+          error instanceof Error &&
+          (error.name === "TimeoutError" || error.name === "AbortError");
         const hasFallback = index < models.length - 1;
-        if (!hasFallback || (providerStatus !== 429 && providerStatus !== 503)) {
+        if (
+          !hasFallback ||
+          (!timedOut &&
+            providerStatus !== 429 &&
+            providerStatus !== 503 &&
+            providerStatus !== 504)
+        ) {
           throw error;
         }
 
-        // Briefly wait before trying the configured backup model on transient capacity errors.
+        // Briefly wait before trying the backup after a timeout or capacity error.
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
     }
@@ -136,6 +149,10 @@ router.post("/chat", async (req, res): Promise<void> => {
     const providerStatus =
       typeof apiError?.status === "number" ? apiError.status : undefined;
     const providerUnavailable = providerStatus === 429 || providerStatus === 503;
+    const timedOut =
+      providerStatus === 504 ||
+      (error instanceof Error &&
+        (error.name === "TimeoutError" || error.name === "AbortError"));
 
     req.log.error(
       {
@@ -145,8 +162,10 @@ router.post("/chat", async (req, res): Promise<void> => {
       },
       "Gemini city-guide request failed",
     );
-    res.status(providerUnavailable ? 503 : 502).json({
-      error: providerUnavailable
+    res.status(timedOut ? 504 : providerUnavailable ? 503 : 502).json({
+      error: timedOut
+        ? "The city guide took too long to respond. Please try again."
+        : providerUnavailable
         ? "The city guide is busy right now. Please try again in a moment."
         : "The city guide could not reach Gemini. Please try again.",
     });

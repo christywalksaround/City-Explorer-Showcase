@@ -153,11 +153,26 @@ async function askCityGuide() {
   chatSend.disabled = true;
   chatStatus.className = "chat-status is-loading";
   chatStatus.textContent = "Finding a local answer...";
+  const statusMessages = [
+    "Checking one more local detail...",
+    "Almost there—waiting on the city guide...",
+    "The guide is taking longer than usual. I’ll keep trying briefly...",
+  ];
+  let elapsedMessage = 0;
+  const statusTimer = window.setInterval(() => {
+    if (elapsedMessage < statusMessages.length) {
+      chatStatus.textContent = statusMessages[elapsedMessage];
+      elapsedMessage += 1;
+    }
+  }, 7000);
+  const requestController = new AbortController();
+  const requestTimeout = window.setTimeout(() => requestController.abort(), 22_000);
 
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: requestController.signal,
       body: JSON.stringify({
         message,
         // Keep the request within the API contract while preserving recent context.
@@ -192,8 +207,15 @@ async function askCityGuide() {
     chatStatus.textContent = "";
   } catch (error) {
     chatStatus.className = "chat-status";
-    chatStatus.textContent = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+    chatStatus.textContent =
+      error instanceof Error && error.name === "AbortError"
+        ? "The city guide is taking longer than usual. Please try again."
+        : error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.";
   } finally {
+    window.clearInterval(statusTimer);
+    window.clearTimeout(requestTimeout);
     chatSend.disabled = false;
     chatInput.focus();
   }
