@@ -1,4 +1,4 @@
-import { GoogleGenAI, ThinkingLevel } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import {
   GetCityGuideSystemPromptResponse,
   SendCityGuideChatBody,
@@ -12,7 +12,7 @@ import {
 } from "../city";
 
 const router: IRouter = Router();
-const GEMINI_MODEL_TIMEOUT_MS = 20_000;
+const GEMINI_REQUEST_TIMEOUT_MS = 20_000;
 
 router.get("/chat/system-prompt", (_req, res): void => {
   const response = GetCityGuideSystemPromptResponse.parse({
@@ -71,8 +71,9 @@ router.post("/chat", async (req, res): Promise<void> => {
       | Awaited<ReturnType<typeof ai.models.generateContent>>
       | undefined;
 
+    // All attempts share one deadline so retries cannot extend the user's wait.
+    const requestSignal = AbortSignal.timeout(GEMINI_REQUEST_TIMEOUT_MS);
     for (const [index, model] of models.entries()) {
-      const requestSignal = AbortSignal.timeout(GEMINI_MODEL_TIMEOUT_MS);
       try {
         result = await ai.models.generateContent({
           model,
@@ -82,10 +83,7 @@ router.post("/chat", async (req, res): Promise<void> => {
             temperature: settings.temperature,
             topP: settings.topP,
             maxOutputTokens: settings.maxOutputTokens,
-            // Keep this lightweight city-guide chat from spending the answer budget on reasoning.
-            thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
             abortSignal: requestSignal,
-            httpOptions: { timeout: GEMINI_MODEL_TIMEOUT_MS },
           },
         });
         modelUsed = model;
@@ -109,7 +107,7 @@ router.post("/chat", async (req, res): Promise<void> => {
           throw error;
         }
 
-        // Briefly wait before trying the backup after a timeout or capacity error.
+        // Briefly wait before trying the backup after a capacity error.
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
     }

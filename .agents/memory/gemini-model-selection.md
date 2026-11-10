@@ -3,10 +3,16 @@ name: Gemini model selection
 description: Project-specific notes for choosing models with the direct Google GenAI API key.
 ---
 
-When using the direct Google GenAI SDK with `GEMINI_API_KEY`, verify model IDs against that key's `models.list` results and confirm `generateContent` support. Replit AI Integration model availability does not guarantee the same model works through the direct API. During implementation, `gemini-2.5-flash` was rejected for new API users and `gemini-3-flash-preview` was not supported on API v1; `gemini-3.8-flash` and `gemini-3.7-flash` were listed.
+When using the direct Google GenAI SDK with `GEMINI_API_KEY`, check that key's live model list, then confirm the candidate with a timed generation request. Catalog presence is not proof that generation works promptly. Replit AI Integration availability does not guarantee direct API availability.
 
-**Why:** The SDK can fail at runtime even when a model appears in a different integration's supported-model list.
+**Why:** Multiple listed Flash models timed out while a Flash-Lite candidate returned real generated text in roughly a second with the same key. Repeatedly adjusting timeouts or returning canned facts did not restore the requested AI behavior.
 
-Provider calls can also return `DEADLINE_EXCEEDED` after a long wait. A configured backup may time out too, so apply a per-model deadline and treat provider 504s as retryable only when a backup exists.
+Use one overall request deadline across provider attempts rather than restarting the full timeout for each backup.
 
-**How to apply:** Keep `GEMINI_MODEL` configurable, use a verified default, cap each attempt, and return a clear temporary-unavailable response when all verified models time out or are at capacity.
+**How to apply:** Keep `GEMINI_MODEL` configurable, verify actual generated text and latency before declaring success, and distinguish a facts-only fallback from a working AI answer.
+
+Keep the user's Google API key rather than switching to Replit-managed Gemini.
+
+**Why:** The user explicitly chose “Keep Google API key” when offered the managed alternative.
+
+**How to apply:** Do not provision a credit-billed replacement without new approval. Direct `gemini-3.8-flash` rejected `MINIMAL` thinking with HTTP 400; SDK enum availability alone does not establish model support.

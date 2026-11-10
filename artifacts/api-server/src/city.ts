@@ -7,10 +7,10 @@ export const cityGuideSettings = {
   state: "Texas",
   voice:
     "a big-hearted, many-flavored Houston local who is always a little surprising",
-  model: process.env["GEMINI_MODEL"]?.trim() || "gemini-3.8-flash",
+  model: process.env["GEMINI_MODEL"]?.trim() || "gemini-3.5-flash-lite",
   fallbackModels: process.env["GEMINI_MODEL"]?.trim()
     ? []
-    : ["gemini-3.7-flash"],
+    : ["gemini-3.8-flash"],
   defaults: {
     temperature: 1,
     topP: 0.95,
