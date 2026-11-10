@@ -5,7 +5,11 @@ import {
   SendCityGuideChatResponse,
 } from "@workspace/api-zod";
 import { Router, type IRouter } from "express";
-import { buildCityGuideSystemPrompt, cityGuideSettings } from "../city";
+import {
+  buildCityGuideFallbackReply,
+  buildCityGuideSystemPrompt,
+  cityGuideSettings,
+} from "../city";
 
 const router: IRouter = Router();
 const GEMINI_MODEL_TIMEOUT_MS = 10_000;
@@ -95,12 +99,12 @@ router.post("/chat", async (req, res): Promise<void> => {
           error instanceof Error &&
           (error.name === "TimeoutError" || error.name === "AbortError");
         const hasFallback = index < models.length - 1;
+        // A deadline is already the slow path; return the local facts backup
+        // rather than waiting through another full provider timeout.
         if (
           !hasFallback ||
-          (!timedOut &&
-            providerStatus !== 429 &&
-            providerStatus !== 503 &&
-            providerStatus !== 504)
+          timedOut ||
+          (providerStatus !== 429 && providerStatus !== 503)
         ) {
           throw error;
         }
@@ -148,7 +152,10 @@ router.post("/chat", async (req, res): Promise<void> => {
 
     const providerStatus =
       typeof apiError?.status === "number" ? apiError.status : undefined;
-    const providerUnavailable = providerStatus === 429 || providerStatus === 503;
+    const providerUnavailable =
+      providerStatus === 429 ||
+      providerStatus === 503 ||
+      providerStatus === 504;
     const timedOut =
       providerStatus === 504 ||
       (error instanceof Error &&
@@ -162,6 +169,19 @@ router.post("/chat", async (req, res): Promise<void> => {
       },
       "Gemini city-guide request failed",
     );
+    if (providerUnavailable || timedOut) {
+      res.json(
+        SendCityGuideChatResponse.parse({
+          reply: buildCityGuideFallbackReply(message),
+          usage: { promptTokens: 0, outputTokens: 0, totalTokens: 0 },
+          settings,
+          model: "Houston facts backup",
+          finishReason: "FALLBACK",
+        }),
+      );
+      return;
+    }
+
     res.status(timedOut ? 504 : providerUnavailable ? 503 : 502).json({
       error: timedOut
         ? "The city guide took too long to respond. Please try again."

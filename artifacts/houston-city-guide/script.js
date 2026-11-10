@@ -104,7 +104,11 @@ function addMessage(role, content, metadata = null, wasCutOff = false) {
 
   const byline = document.createElement("span");
   byline.className = "message-byline";
-  byline.textContent = role === "user" ? "YOU, IN HOUSTON" : "HOUSTON CITY GUIDE";
+  byline.textContent = role === "user"
+    ? "YOU, IN HOUSTON"
+    : metadata?.finishReason === "FALLBACK"
+      ? "HOUSTON CITY GUIDE · FACTS MODE"
+      : "HOUSTON CITY GUIDE";
 
   const body = document.createElement("p");
   body.textContent = content;
@@ -118,7 +122,9 @@ function addMessage(role, content, metadata = null, wasCutOff = false) {
       : "Settings unavailable";
     const usage = metadata.usage || {};
     [
-      `MODEL ${metadata.model || "Unknown"}`,
+      metadata.finishReason === "FALLBACK"
+        ? "LIVE AI TEMPORARILY UNAVAILABLE"
+        : `MODEL ${metadata.model || "Unknown"}`,
       settingSummary,
       `TOKENS IN ${usage.promptTokens ?? "—"} · OUT ${usage.outputTokens ?? "—"} · TOTAL ${usage.totalTokens ?? "—"}`,
       metadata.finishReason ? `FINISH ${metadata.finishReason}` : "",
