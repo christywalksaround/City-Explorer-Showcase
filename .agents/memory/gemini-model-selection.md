@@ -7,4 +7,6 @@ When using the direct Google GenAI SDK with `GEMINI_API_KEY`, verify model IDs a
 
 **Why:** The SDK can fail at runtime even when a model appears in a different integration's supported-model list.
 
-**How to apply:** Keep `GEMINI_MODEL` configurable, use a verified default, and return a clear temporary-unavailable response for provider capacity errors.
+Provider calls can also return `DEADLINE_EXCEEDED` after a long wait. A configured backup may time out too, so apply a per-model deadline and treat provider 504s as retryable only when a backup exists.
+
+**How to apply:** Keep `GEMINI_MODEL` configurable, use a verified default, cap each attempt, and return a clear temporary-unavailable response when all verified models time out or are at capacity.
