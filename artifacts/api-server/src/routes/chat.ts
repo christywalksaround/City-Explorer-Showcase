@@ -12,7 +12,7 @@ import {
 } from "../city";
 
 const router: IRouter = Router();
-const GEMINI_MODEL_TIMEOUT_MS = 10_000;
+const GEMINI_MODEL_TIMEOUT_MS = 20_000;
 
 router.get("/chat/system-prompt", (_req, res): void => {
   const response = GetCityGuideSystemPromptResponse.parse({
@@ -83,7 +83,7 @@ router.post("/chat", async (req, res): Promise<void> => {
             topP: settings.topP,
             maxOutputTokens: settings.maxOutputTokens,
             // Keep this lightweight city-guide chat from spending the answer budget on reasoning.
-            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+            thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
             abortSignal: requestSignal,
             httpOptions: { timeout: GEMINI_MODEL_TIMEOUT_MS },
           },

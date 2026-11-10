@@ -172,7 +172,7 @@ async function askCityGuide() {
     }
   }, 7000);
   const requestController = new AbortController();
-  const requestTimeout = window.setTimeout(() => requestController.abort(), 22_000);
+  const requestTimeout = window.setTimeout(() => requestController.abort(), 24_000);
 
   try {
     const response = await fetch("/api/chat", {
@@ -205,10 +205,13 @@ async function askCityGuide() {
       result,
       String(result.finishReason || "").toUpperCase().replace(/[-\s]/g, "_").includes("MAX_TOKENS"),
     );
-    conversationHistory.push(
-      { role: "user", content: message },
-      { role: "assistant", content: result.reply },
-    );
+    // A local facts fallback is not part of the AI conversation context.
+    if (result.finishReason !== "FALLBACK") {
+      conversationHistory.push(
+        { role: "user", content: message },
+        { role: "assistant", content: result.reply },
+      );
+    }
     chatStatus.className = "chat-status";
     chatStatus.textContent = "";
   } catch (error) {
