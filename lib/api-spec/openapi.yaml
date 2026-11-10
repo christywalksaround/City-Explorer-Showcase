@@ -13,6 +13,59 @@ tags:
   - name: chat
     description: Houston city-guide chat
 paths:
+  /dishes:
+    get:
+      operationId: listDishes
+      responses:
+        "200":
+          description: Photos newest first, without image data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DishPhoto"
+    post:
+      operationId: createDish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DishInput"
+      responses:
+        "201":
+          description: Saved photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DishPhoto"
+        "400":
+          description: Invalid photo or fields
+        "413":
+          description: Photo exceeds 3 MB or JSON exceeds 5 MB
+  /dishes/{id}/image:
+    get:
+      operationId: getDishImage
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Original uploaded image bytes
+          content:
+            image/jpeg:
+              schema: { type: string, format: binary }
+            image/png:
+              schema: { type: string, format: binary }
+            image/webp:
+              schema: { type: string, format: binary }
+        "404":
+          description: Photo not found
   /healthz:
     get:
       operationId: healthCheck
@@ -76,6 +129,24 @@ paths:
                 $ref: "#/components/schemas/ChatSystemPrompt"
 components:
   schemas:
+    DishInput:
+      type: object
+      required: [title, image]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 120 }
+        caption: { type: string, maxLength: 1000 }
+        image: { type: string, minLength: 1 }
+    DishPhoto:
+      type: object
+      required: [id, title, caption, mimeType, inspectorNote, createdAt, imageUrl]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        caption: { type: [string, "null"] }
+        mimeType: { type: string }
+        inspectorNote: { type: [string, "null"] }
+        createdAt: { type: string, format: date-time }
+        imageUrl: { type: string }
     HealthStatus:
       type: object
       properties:

@@ -278,3 +278,304 @@ systemPromptDetails.addEventListener("toggle", async () => {
     systemPromptContent.replaceChildren(failure);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Community dish photos: upload form + gallery.
+// Talks to GET /api/dishes and POST /api/dishes with plain fetch.
+// ---------------------------------------------------------------------------
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_BYTES = 3 * 1024 * 1024; // 3 MB limit for both the original and resized image
+const MAX_EDGE = 1280; // longest side after resizing, in pixels
+
+const dishForm = document.querySelector("#dish-form");
+const dishTitle = document.querySelector("#dish-title");
+const dishCaption = document.querySelector("#dish-caption");
+const dishFile = document.querySelector("#dish-file");
+const dishPreview = document.querySelector("#dish-preview");
+const dishDropText = document.querySelector("#dish-drop-text");
+const dishFormStatus = document.querySelector("#dish-form-status");
+const dishSubmit = document.querySelector("#dish-submit");
+const dishGrid = document.querySelector("#dish-grid");
+const dishGalleryState = document.querySelector("#dish-gallery-state");
+const dishCount = document.querySelector("#dish-count");
+const dishRefresh = document.querySelector("#dish-refresh");
+
+// We keep the preview's object URL so we can release it later (prevents memory leaks).
+let previewUrl = null;
+let galleryRequest = 0;
+
+function setFormStatus(kind, message) {
+  dishFormStatus.className = `dish-status${kind ? ` is-${kind}` : ""}`;
+  dishFormStatus.textContent = message;
+}
+
+// Check the ORIGINAL file before doing any work. Returns an error string or "".
+function validateOriginalFile(file) {
+  if (!file) return "Please choose a photo of your dish.";
+  if (file.size > MAX_BYTES) {
+    const mb = (file.size / 1024 / 1024).toFixed(1);
+    return `That photo is ${mb} MB. Please choose one that is 3 MB or smaller.`;
+  }
+  // Some devices omit MIME types. Allow a matching extension for those files;
+  // resizeToDataUrl checks the actual bytes before processing or uploading.
+  const unknownType = !file.type || file.type === "application/octet-stream";
+  if (!ALLOWED_TYPES.includes(file.type) && !(unknownType && /\.(jpe?g|png|webp)$/i.test(file.name))) {
+    return `"${file.name}" is not a supported format. Please use a JPEG, PNG, or WebP photo (GIFs are not accepted).`;
+  }
+  return "";
+}
+
+function clearPreview() {
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = null;
+  dishPreview.hidden = true;
+  dishPreview.removeAttribute("src");
+  dishDropText.textContent = "Choose a photo";
+}
+
+// Show a small preview as soon as a valid file is picked.
+dishFile.addEventListener("change", () => {
+  clearPreview();
+  const file = dishFile.files[0];
+  if (!file) return;
+  const problem = validateOriginalFile(file);
+  if (problem) {
+    dishFile.setAttribute("aria-invalid", "true");
+    setFormStatus("error", problem);
+    return;
+  }
+  dishFile.removeAttribute("aria-invalid");
+  setFormStatus("", "");
+  previewUrl = URL.createObjectURL(file);
+  dishPreview.src = previewUrl;
+  dishPreview.hidden = false;
+  dishDropText.textContent = file.name;
+});
+
+// Turn a canvas into a Blob (canvas.toBlob uses a callback, so we wrap it in a Promise).
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Could not process that image."))), type, quality);
+  });
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Could not read the resized image."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Load the file into an <img>, draw it smaller on a canvas, and return a data URL.
+async function resizeToDataUrl(file) {
+  const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const ascii = (start, end) => String.fromCharCode(...header.slice(start, end));
+  let detectedType = "";
+  if (header[0] === 255 && header[1] === 216 && header[2] === 255) detectedType = "image/jpeg";
+  if ([137, 80, 78, 71, 13, 10, 26, 10].every((byte, i) => header[i] === byte)) detectedType = "image/png";
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") detectedType = "image/webp";
+  if (!detectedType) throw new Error("Please use a real JPEG, PNG, or WebP photo (GIFs are not accepted).");
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    try {
+      await img.decode();
+    } catch {
+      throw new Error("That file could not be opened as an image.");
+    }
+    const scale = Math.min(1, MAX_EDGE / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    // PNG stays PNG (keeps transparency); others use JPEG/WebP with quality steps.
+    const outType = detectedType;
+    let blob = await canvasToBlob(canvas, outType, 0.88);
+    // If still too large, step down quality using JPEG until it fits.
+    for (const q of [0.8, 0.7, 0.6, 0.5]) {
+      if (blob.size <= MAX_BYTES) break;
+      blob = await canvasToBlob(canvas, "image/jpeg", q);
+    }
+    if (blob.size > MAX_BYTES) throw new Error("Even after resizing, this photo is over 3 MB. Please try a different one.");
+    return blobToDataUrl(blob);
+  } finally {
+    URL.revokeObjectURL(url); // always release the temporary URL
+  }
+}
+
+function formatDate(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+// Build one gallery card. Every user-provided string goes through textContent.
+function createDishCard(dish) {
+  const item = document.createElement("li");
+  item.className = "dish-card";
+  const figure = document.createElement("figure");
+  const img = document.createElement("img");
+  img.src = dish.imageUrl;
+  img.alt = dish.caption ? `${dish.title}: ${dish.caption}` : dish.title;
+  img.loading = "lazy";
+  img.decoding = "async";
+  const caption = document.createElement("figcaption");
+  const title = document.createElement("h3");
+  title.textContent = dish.title;
+  caption.append(title);
+  if (dish.caption) {
+    const text = document.createElement("p");
+    text.textContent = dish.caption;
+    caption.append(text);
+  }
+  const time = document.createElement("time");
+  time.dateTime = dish.createdAt;
+  time.textContent = `SHARED ${formatDate(dish.createdAt).toUpperCase()}`;
+  caption.append(time);
+  figure.append(img, caption);
+  item.append(figure);
+  return item;
+}
+
+function updateDishCount() {
+  const total = dishGrid.querySelectorAll(".dish-card").length;
+  dishCount.textContent = `${total} ${total === 1 ? "DISH" : "DISHES"}`;
+  if (total === 0 && !dishGalleryState.classList.contains("is-error")) {
+    showGalleryMessage("empty", "No plates yet. Be the first to share something delicious.");
+  } else if (total > 0 && !dishGalleryState.classList.contains("is-error")) {
+    showGalleryMessage("", "");
+  }
+}
+
+function showGalleryMessage(kind, message, withRetry = false) {
+  dishGalleryState.className = `dish-gallery-state${kind ? ` is-${kind}` : ""}`;
+  dishGalleryState.replaceChildren();
+  if (!message) return;
+  const p = document.createElement("p");
+  const span = document.createElement("span");
+  span.textContent = message;
+  p.append(span);
+  if (withRetry) {
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "dish-refresh";
+    retry.textContent = "Try again";
+    retry.addEventListener("click", loadDishes);
+    p.append(retry);
+  }
+  dishGalleryState.append(p);
+}
+
+// Read an error message from a JSON {error} body, falling back to a friendly default.
+async function readError(response, fallback) {
+  try {
+    const body = await response.json();
+    if (body && typeof body.error === "string") return body.error;
+  } catch { /* body was not JSON */ }
+  return fallback;
+}
+
+async function loadDishes() {
+  const request = ++galleryRequest;
+  dishRefresh.disabled = true;
+  dishGrid.setAttribute("aria-busy", "true");
+  dishCount.textContent = "LOADING";
+  showGalleryMessage("loading", "");
+  const loadingNote = document.createElement("span");
+  loadingNote.className = "sr-only";
+  loadingNote.textContent = "Loading shared dishes...";
+  dishGalleryState.append(loadingNote);
+  // Skeleton placeholders while we wait.
+  dishGrid.replaceChildren(...Array.from({ length: 3 }, () => {
+    const li = document.createElement("li");
+    li.className = "dish-skeleton";
+    li.setAttribute("aria-hidden", "true");
+    return li;
+  }));
+  try {
+    const response = await fetch("/api/dishes");
+    if (!response.ok) throw new Error(await readError(response, "The dish gallery could not load."));
+    const dishes = await response.json();
+    if (request !== galleryRequest) return;
+    if (!Array.isArray(dishes)) throw new Error("The gallery came back in an unexpected format.");
+    dishGrid.replaceChildren(...dishes.map(createDishCard));
+    showGalleryMessage("", "");
+    updateDishCount();
+  } catch (error) {
+    if (request !== galleryRequest) return;
+    dishGrid.replaceChildren();
+    dishCount.textContent = "UNAVAILABLE";
+    const msg = error instanceof Error && error.message !== "Failed to fetch" ? error.message : "Could not reach the gallery.";
+    showGalleryMessage("error", `${msg} Check your connection and try again.`, true);
+  } finally {
+    dishRefresh.disabled = false;
+    dishGrid.setAttribute("aria-busy", "false");
+  }
+}
+
+dishForm.addEventListener("submit", async (event) => {
+  event.preventDefault(); // stay on the page
+  if (dishSubmit.disabled) return;
+
+  const title = dishTitle.value.trim();
+  const caption = dishCaption.value.trim();
+  const file = dishFile.files[0];
+
+  if (!title) {
+    dishTitle.setAttribute("aria-invalid", "true");
+    setFormStatus("error", "Please give your dish a name.");
+    dishTitle.focus();
+    return;
+  }
+  dishTitle.removeAttribute("aria-invalid");
+
+  // Validate before resizing; no request is sent if this fails.
+  const problem = validateOriginalFile(file);
+  if (problem) {
+    dishFile.setAttribute("aria-invalid", "true");
+    setFormStatus("error", problem);
+    dishFile.focus();
+    return;
+  }
+
+  dishSubmit.disabled = true;
+  setFormStatus("loading", "Resizing your photo...");
+  try {
+    const image = await resizeToDataUrl(file);
+    setFormStatus("loading", "Sharing your dish...");
+    const payload = { title, image };
+    if (caption) payload.caption = caption;
+    const response = await fetch("/api/dishes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readError(response, "Your dish could not be shared."));
+    const dish = await response.json();
+
+    // Put the new dish at the front straight away.
+    // A slower gallery fetch must not overwrite a newly saved photo.
+    galleryRequest++;
+    dishGrid.querySelectorAll(".dish-skeleton").forEach((item) => item.remove());
+    if (dishGalleryState.classList.contains("is-error")) showGalleryMessage("", "");
+    dishGrid.prepend(createDishCard(dish));
+    updateDishCount();
+
+    dishForm.reset();
+    clearPreview();
+    setFormStatus("success", `"${dish.title}" is on the table. Thanks for sharing.`);
+    dishTitle.focus();
+  } catch (error) {
+    const msg = error instanceof Error && error.message !== "Failed to fetch" ? error.message : "Could not reach the server.";
+    setFormStatus("error", `${msg} Please try again.`);
+  } finally {
+    dishSubmit.disabled = false;
+  }
+});
+
+dishRefresh.addEventListener("click", loadDishes);
+loadDishes();

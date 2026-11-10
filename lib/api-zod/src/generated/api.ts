@@ -8,6 +8,52 @@
 import * as zod from 'zod';
 
 
+export const ListDishesResponseItem = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "caption": zod.string().nullable(),
+  "mimeType": zod.string(),
+  "inspectorNote": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "imageUrl": zod.string()
+})
+export const ListDishesResponse = zod.array(ListDishesResponseItem)
+
+
+export const createDishBodyTitleMax = 120;
+
+export const createDishBodyCaptionMax = 1000;
+
+
+
+
+export const CreateDishBody = zod.object({
+  "title": zod.string().min(1).max(createDishBodyTitleMax),
+  "caption": zod.string().max(createDishBodyCaptionMax).optional(),
+  "image": zod.string().min(1)
+})
+
+export const CreateDishResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "caption": zod.string().nullable(),
+  "mimeType": zod.string(),
+  "inspectorNote": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "imageUrl": zod.string()
+})
+
+
+
+
+
+export const GetDishImageParams = zod.object({
+  "id": zod.coerce.number().int().min(1)
+})
+
+export const GetDishImageResponse = zod.unknown()
+
+
 /**
  * Returns server health status
  * @summary Health check

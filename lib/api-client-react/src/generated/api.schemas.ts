@@ -5,6 +5,30 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface DishInput {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  title: string;
+  /** @maxLength 1000 */
+  caption?: string;
+  /** @minLength 1 */
+  image: string;
+}
+
+export interface DishPhoto {
+  id: number;
+  title: string;
+  /** @nullable */
+  caption: string | null;
+  mimeType: string;
+  /** @nullable */
+  inspectorNote: string | null;
+  createdAt: string;
+  imageUrl: string;
+}
+
 export interface HealthStatus {
   status: string;
 }

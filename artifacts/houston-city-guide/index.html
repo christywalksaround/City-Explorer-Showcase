@@ -23,6 +23,7 @@
       </a>
       <nav class="top-nav" aria-label="Main navigation">
         <a href="#food">Food</a>
+        <a href="#dishes">Dishes</a>
         <a href="#facts">Fast facts</a>
         <a href="#city-guide-chat">Ask a local</a>
         <a href="#likes">Your list</a>
@@ -80,6 +81,43 @@
             <p>Louisiana spice meets Vietnamese aromatics: crawfish tossed in garlicky, buttery seasoning, best eaten with your hands and people you like.</p>
           </div>
         </article>
+      </section>
+
+
+      <section class="dishes-section" id="dishes" aria-labelledby="dishes-title">
+        <div class="dishes-top">
+          <div class="dishes-heading">
+            <p class="eyebrow">01½ / THE COMMUNITY PLATE</p>
+            <h2 id="dishes-title">Show us<br><em>your plate.</em></h2>
+            <p>Found a bowl of pho worth crossing town for? A kolache you still think about? Snap it, name it, and add it to the table.</p>
+          </div>
+          <form class="dish-form" id="dish-form" novalidate>
+            <div class="dish-field">
+              <label for="dish-title">Dish name <span class="req">required</span></label>
+              <input id="dish-title" name="title" type="text" maxlength="120" required autocomplete="off" placeholder="Brisket kolache from a Bellaire bakery">
+            </div>
+            <div class="dish-field">
+              <label for="dish-caption">Caption <span class="opt">optional</span></label>
+              <textarea id="dish-caption" name="caption" rows="2" maxlength="500" placeholder="Where you found it, why it stuck with you..."></textarea>
+            </div>
+            <div class="dish-field">
+              <label for="dish-file">Photo <span class="opt">JPEG, PNG or WebP, up to 3 MB</span></label>
+              <label class="dish-drop" for="dish-file">
+                <img class="dish-preview" id="dish-preview" alt="" hidden>
+                <span class="dish-drop-text" id="dish-drop-text">Choose a photo</span>
+              </label>
+              <input id="dish-file" class="dish-file" name="image" type="file" accept="image/jpeg,image/png,image/webp" required aria-describedby="dish-form-status">
+            </div>
+            <p class="dish-status" id="dish-form-status" role="status" aria-live="polite"></p>
+            <button class="dish-submit" id="dish-submit" type="submit"><span>Share this dish</span><span aria-hidden="true">↗</span></button>
+          </form>
+        </div>
+        <div class="dish-gallery-bar">
+          <p class="list-label">FROM THE TABLE <span id="dish-count">LOADING</span></p>
+          <button class="dish-refresh" id="dish-refresh" type="button">Refresh <span aria-hidden="true">↻</span></button>
+        </div>
+        <div class="dish-gallery-state" id="dish-gallery-state" role="status" aria-live="polite"></div>
+        <ul class="dish-grid" id="dish-grid" aria-busy="true" aria-label="Shared dish photos"></ul>
       </section>
 
       <section class="facts-section" id="facts" aria-labelledby="facts-title">
