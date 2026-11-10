@@ -5,6 +5,11 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface DishRejection {
+  error: string;
+  reason: string;
+}
+
 export interface DishInput {
   /**
      * @minLength 1

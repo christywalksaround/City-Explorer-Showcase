@@ -436,6 +436,12 @@ function createDishCard(dish) {
   time.dateTime = dish.createdAt;
   time.textContent = `SHARED ${formatDate(dish.createdAt).toUpperCase()}`;
   caption.append(time);
+  if (dish.inspectorNote) {
+    const note = document.createElement("p");
+    note.className = "dish-inspector-note";
+    note.textContent = dish.inspectorNote;
+    caption.append(note);
+  }
   figure.append(img, caption);
   item.append(figure);
   return item;
@@ -474,7 +480,9 @@ function showGalleryMessage(kind, message, withRetry = false) {
 async function readError(response, fallback) {
   try {
     const body = await response.json();
-    if (body && typeof body.error === "string") return body.error;
+    if (body && typeof body.error === "string") {
+      return body.error + (typeof body.reason === "string" ? ` ${body.reason}` : "");
+    }
   } catch { /* body was not JSON */ }
   return fallback;
 }
@@ -546,7 +554,7 @@ dishForm.addEventListener("submit", async (event) => {
   setFormStatus("loading", "Resizing your photo...");
   try {
     const image = await resizeToDataUrl(file);
-    setFormStatus("loading", "Sharing your dish...");
+    setFormStatus("loading", "The AI inspector is checking your photo for Viet-Cajun crawfish...");
     const payload = { title, image };
     if (caption) payload.caption = caption;
     const response = await fetch("/api/dishes", {

@@ -16,4 +16,5 @@ export * from './chatSystemPrompt';
 export * from './chatUsage';
 export * from './dishInput';
 export * from './dishPhoto';
+export * from './dishRejection';
 export * from './healthStatus';

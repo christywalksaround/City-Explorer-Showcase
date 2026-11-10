@@ -3,6 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import sharp from "sharp";
 import { db, dishPhotosTable } from "@workspace/db";
 import { CreateDishBody, CreateDishResponse, ListDishesResponse, GetDishImageParams } from "@workspace/api-zod";
+import { CITY_DISH, inspectDish, inspectorNote, isApproved } from "../agents/dishInspector";
 
 const router: IRouter = Router();
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
@@ -59,10 +60,28 @@ router.post("/dishes", async (req, res): Promise<void> => {
     res.status(400).json({ error: "This photo is invalid or too large to decode. Choose a valid JPEG, PNG, or WebP." });
     return;
   }
+  let inspection;
+  try {
+    inspection = await inspectDish(`data:${mimeType};base64,${imageBase64}`);
+  } catch {
+    // Fail closed: never save an uninspected image, even during an AI outage.
+    // Do not log provider errors that could contain image data or credentials.
+    req.log.warn("Dish inspector unavailable or returned invalid output");
+    res.status(502).json({ error: "The photo inspector is unavailable right now. Your photo was not saved. Please try again shortly." });
+    return;
+  }
+  if (!isApproved(inspection)) {
+    res.status(422).json({
+      error: `Only ${CITY_DISH} photos can be uploaded!`,
+      reason: `The inspector saw: ${inspection.whatISee}`,
+    });
+    return;
+  }
   const [saved] = await db.insert(dishPhotosTable).values({
     title: parsed.data.title.trim(),
     caption: parsed.data.caption?.trim() || "",
     mimeType, imageBase64,
+    inspectorNote: inspectorNote(inspection),
   }).returning(metadata);
   res.status(201).json(CreateDishResponse.parse(withImageUrl(saved)));
 });

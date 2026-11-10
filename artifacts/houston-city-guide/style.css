@@ -597,6 +597,7 @@ body { background: var(--canvas); color: var(--text-primary); }
 .dish-card h3 { margin: 0 0 6px; font: 700 20px/1.05 var(--display); letter-spacing: -.03em; overflow-wrap: anywhere; }
 .dish-card p { margin: 0 0 8px; color: #4a5f63; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 .dish-card time { font: 8px var(--mono); letter-spacing: .1em; color: var(--bayou); }
+.dish-card .dish-inspector-note { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--bayou); background: var(--surface-cool); color: var(--text-inverse); font-size: 12px; }
 .dish-skeleton { aspect-ratio: 4 / 3.9; background: linear-gradient(#e4d3bd 0 76%, transparent 76% 80%, #ecdfcd 80% 86%, transparent 86% 90%, #ecdfcd 90% 94%, transparent 94%); animation: skel-pulse 1s ease-in-out infinite alternate; }
 @keyframes skel-pulse { to { opacity: .5; } }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

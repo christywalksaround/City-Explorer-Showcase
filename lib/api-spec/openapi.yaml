@@ -44,6 +44,18 @@ paths:
           description: Invalid photo or fields
         "413":
           description: Photo exceeds 3 MB or JSON exceeds 5 MB
+        "422":
+          description: Inspector rejected the photo; nothing saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DishRejection"
+        "502":
+          description: Inspector unavailable; nothing saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
   /dishes/{id}/image:
     get:
       operationId: getDishImage
@@ -129,6 +141,12 @@ paths:
                 $ref: "#/components/schemas/ChatSystemPrompt"
 components:
   schemas:
+    DishRejection:
+      type: object
+      required: [error, reason]
+      properties:
+        error: { type: string }
+        reason: { type: string }
     DishInput:
       type: object
       required: [title, image]

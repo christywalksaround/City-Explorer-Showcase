@@ -26,6 +26,7 @@ import type {
   ChatSystemPrompt,
   DishInput,
   DishPhoto,
+  DishRejection,
   HealthStatus
 } from './api.schemas';
 
@@ -166,7 +167,7 @@ return customFetch<DishPhoto>(getCreateDishUrl(),
 
 export const getCreateDishMutationKey = () => ['createDish'] as const;
 
-export const getCreateDishMutationOptions = <TError = ErrorType<void>,
+export const getCreateDishMutationOptions = <TError = ErrorType<void | DishRejection | ApiError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDish>>, TError,CreateDishMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createDish>>, TError,CreateDishMutationVariables, TContext> => {
 
@@ -195,10 +196,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateDishMutationResult = NonNullable<Awaited<ReturnType<typeof createDish>>>
     export type CreateDishMutationBody = BodyType<DishInput>
-    export type CreateDishMutationError = ErrorType<void>
+    export type CreateDishMutationError = ErrorType<void | DishRejection | ApiError>
     export type CreateDishMutationVariables = {data: BodyType<DishInput>}
 
-    export const useCreateDish = <TError = ErrorType<void>,
+    export const useCreateDish = <TError = ErrorType<void | DishRejection | ApiError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDish>>, TError,CreateDishMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof createDish>>,
