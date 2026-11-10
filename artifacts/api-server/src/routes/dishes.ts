@@ -61,7 +61,7 @@ router.post("/dishes", async (req, res): Promise<void> => {
   }
   const [saved] = await db.insert(dishPhotosTable).values({
     title: parsed.data.title.trim(),
-    caption: parsed.data.caption?.trim() || null,
+    caption: parsed.data.caption?.trim() || "",
     mimeType, imageBase64,
   }).returning(metadata);
   res.status(201).json(CreateDishResponse.parse(withImageUrl(saved)));

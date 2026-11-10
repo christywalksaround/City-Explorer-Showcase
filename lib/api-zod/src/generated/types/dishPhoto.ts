@@ -9,8 +9,7 @@
 export interface DishPhoto {
   id: number;
   title: string;
-  /** @nullable */
-  caption: string | null;
+  caption: string;
   mimeType: string;
   /** @nullable */
   inspectorNote: string | null;

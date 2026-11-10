@@ -11,7 +11,7 @@ import * as zod from 'zod';
 export const ListDishesResponseItem = zod.object({
   "id": zod.number().int(),
   "title": zod.string(),
-  "caption": zod.string().nullable(),
+  "caption": zod.string(),
   "mimeType": zod.string(),
   "inspectorNote": zod.string().nullable(),
   "createdAt": zod.coerce.date(),
@@ -36,7 +36,7 @@ export const CreateDishBody = zod.object({
 export const CreateDishResponse = zod.object({
   "id": zod.number().int(),
   "title": zod.string(),
-  "caption": zod.string().nullable(),
+  "caption": zod.string(),
   "mimeType": zod.string(),
   "inspectorNote": zod.string().nullable(),
   "createdAt": zod.coerce.date(),

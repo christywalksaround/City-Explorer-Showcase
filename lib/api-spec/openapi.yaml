@@ -142,7 +142,7 @@ components:
       properties:
         id: { type: integer }
         title: { type: string }
-        caption: { type: [string, "null"] }
+        caption: { type: string }
         mimeType: { type: string }
         inspectorNote: { type: [string, "null"] }
         createdAt: { type: string, format: date-time }
