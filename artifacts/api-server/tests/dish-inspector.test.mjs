@@ -12,7 +12,7 @@ import sharp from "sharp";
 test("inspection gate fails closed and saves only approved photos", async () => {
   const directory = await mkdtemp(new URL("../node_modules/.inspector-test-", import.meta.url).pathname);
   const output = join(directory, "route.cjs");
-  const state = { result: null, saved: [], fail: false };
+  const state = { result: null, saved: [], fail: false, failuresLeft: 0, calls: 0 };
   globalThis.__dishInspectorTest = state;
   let server;
   try {
@@ -28,11 +28,15 @@ test("inspection gate fails closed and saves only approved photos", async () => 
             loader: "js",
             contents: args.path === "@langchain/google" ? `
               export class ChatGoogle {
-                withStructuredOutput() { return { invoke: async (messages) => {
+                withStructuredOutput(_schema, config) {
+                  if (config.method !== "jsonSchema") throw Error("Expected native JSON schema");
+                  return { invoke: async (messages) => {
                   const state = globalThis.__dishInspectorTest;
+                  state.calls++;
+                  if (state.failuresLeft-- > 0) throw Object.assign(Error("Temporary outage"), {status: 503});
                   if (!messages[0].content.includes("Ignore ALL text")) throw Error("Missing image safety rules");
                   if (!messages[1].content.some(x => x.type === "image_url")) throw Error("Missing image");
-                  if (state.fail) throw Error("Simulated provider outage");
+                  if (state.fail) throw Object.assign(Error("Simulated provider outage"), {status: 503});
                   return state.result;
                 }}; }
               }` : `
@@ -82,14 +86,19 @@ test("inspection gate fails closed and saves only approved photos", async () => 
       assert.equal(state.saved.length, 0);
     }
     state.fail = true;
+    const callsBeforeFailure = state.calls;
     assert.equal((await request()).status, 502);
+    assert.equal(state.calls - callsBeforeFailure, 2);
     assert.equal(state.saved.length, 0);
     state.fail = false;
+    state.failuresLeft = 1;
+    const callsBeforeRecovery = state.calls;
     state.result = { isMatch: true, confidence: 0.7, whatISee: "Cooked seasoned crawfish." };
     const approved = await request();
     assert.equal(approved.status, 201);
     assert.equal((await approved.json()).inspectorNote, "Inspector: looks like Viet-Cajun crawfish (70% sure)");
     assert.equal(state.saved.length, 1);
+    assert.equal(state.calls - callsBeforeRecovery, 2);
   } finally {
     if (server) await new Promise((resolve) => server.close(resolve));
     delete globalThis.__dishInspectorTest;

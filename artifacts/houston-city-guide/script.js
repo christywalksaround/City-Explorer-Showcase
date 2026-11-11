@@ -579,7 +579,7 @@ dishForm.addEventListener("submit", async (event) => {
     dishTitle.focus();
   } catch (error) {
     const msg = error instanceof Error && error.message !== "Failed to fetch" ? error.message : "Could not reach the server.";
-    setFormStatus("error", `${msg} Please try again.`);
+    setFormStatus("error", msg);
   } finally {
     dishSubmit.disabled = false;
   }

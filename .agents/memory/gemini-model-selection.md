@@ -16,3 +16,9 @@ Keep the user's Google API key rather than switching to Replit-managed Gemini.
 **Why:** The user explicitly chose “Keep Google API key” when offered the managed alternative.
 
 **How to apply:** Do not provision a credit-billed replacement without new approval. Direct `gemini-3.8-flash` rejected `MINIMAL` thinking with HTTP 400; SDK enum availability alone does not establish model support.
+
+Inspector failures must retain a safe diagnostic category, never raw provider errors.
+
+**Why:** A production upload failed while subsequent requests worked; the generic catch discarded the cause, preventing a reliable diagnosis.
+
+**How to apply:** Log allowlisted failure categories without credentials or image payloads. Keep transient retries bounded by one deadline and never bypass inspection when the provider fails.

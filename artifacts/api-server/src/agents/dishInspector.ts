@@ -34,6 +34,21 @@ export function inspectorNote(result: DishInspection): string {
   return `Inspector: looks like ${CITY_DISH} (${Math.round(result.confidence * 100)}% sure)`;
 }
 
+// Classify errors without logging provider messages, images, or credentials.
+export function inspectionFailure(error: unknown) {
+  const value = error as { status?: unknown; statusCode?: unknown; message?: unknown; name?: unknown };
+  const rawStatus = value?.status ?? value?.statusCode;
+  const status = typeof rawStatus === "number" ? rawStatus : undefined;
+  const text = `${value?.name ?? ""} ${value?.message ?? ""}`.toLowerCase();
+  if (status === 401 || status === 403 || /api.?key|credential|not configured/.test(text)) return { category: "configuration", retryable: false };
+  if (status === 404 || /model.*not found/.test(text)) return { category: "model", retryable: false };
+  if (/abort|timeout|timed out/.test(text)) return { category: "timeout", retryable: false };
+  if (status === 429 || /429|quota|rate.limit|resource.exhausted/.test(text)) return { category: "rate_limit", retryable: true };
+  if ((status && status >= 500) || /fetch failed|network|econn|unavailable|503|502/.test(text)) return { category: "network", retryable: true };
+  if (error instanceof z.ZodError || /parse|json|structured|tool.call|malformed/.test(text)) return { category: "invalid_output", retryable: true };
+  return { category: "unknown", retryable: false };
+}
+
 export async function inspectDish(imageDataUrl: string): Promise<DishInspection> {
   const apiKey = process.env["GEMINI_API_KEY"];
   if (!apiKey) throw new Error("Inspector is not configured");
@@ -44,8 +59,9 @@ export async function inspectDish(imageDataUrl: string): Promise<DishInspection>
     maxOutputTokens: 512,
     maxRetries: 0,
   });
-  const inspector = model.withStructuredOutput(inspectionSchema);
-  const result = await inspector.invoke([
+  // Native JSON schema avoids requiring an extra tool-call-shaped response.
+  const inspector = model.withStructuredOutput(inspectionSchema, { method: "jsonSchema" });
+  const messages = [
     new SystemMessage(inspectorRules),
     new HumanMessage({
       content: [
@@ -53,7 +69,17 @@ export async function inspectDish(imageDataUrl: string): Promise<DishInspection>
         { type: "image_url", image_url: { url: imageDataUrl } },
       ],
     }),
-  ], { signal: AbortSignal.timeout(20_000) });
-  // Validate again at our trust boundary; malformed results must never approve.
-  return inspectionSchema.parse(result);
+  ];
+  // Both attempts share one deadline; retries cannot double the waiting time.
+  const signal = AbortSignal.timeout(20_000);
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const result = await inspector.invoke(messages, { signal });
+      return inspectionSchema.parse(result);
+    } catch (error) {
+      if (attempt > 0 || signal.aborted || !inspectionFailure(error).retryable) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      signal.throwIfAborted();
+    }
+  }
 }

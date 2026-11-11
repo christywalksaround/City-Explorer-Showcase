@@ -3,7 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import sharp from "sharp";
 import { db, dishPhotosTable } from "@workspace/db";
 import { CreateDishBody, CreateDishResponse, ListDishesResponse, GetDishImageParams } from "@workspace/api-zod";
-import { CITY_DISH, inspectDish, inspectorNote, isApproved } from "../agents/dishInspector";
+import { CITY_DISH, inspectDish, inspectionFailure, inspectorNote, isApproved } from "../agents/dishInspector";
 
 const router: IRouter = Router();
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
@@ -63,11 +63,17 @@ router.post("/dishes", async (req, res): Promise<void> => {
   let inspection;
   try {
     inspection = await inspectDish(`data:${mimeType};base64,${imageBase64}`);
-  } catch {
+  } catch (error) {
     // Fail closed: never save an uninspected image, even during an AI outage.
     // Do not log provider errors that could contain image data or credentials.
-    req.log.warn("Dish inspector unavailable or returned invalid output");
-    res.status(502).json({ error: "The photo inspector is unavailable right now. Your photo was not saved. Please try again shortly." });
+    const { category } = inspectionFailure(error);
+    req.log.warn({ category }, "Dish inspector failed; photo not saved");
+    const message = category === "rate_limit"
+      ? "The photo inspector is busy right now. Your photo was not saved. Please wait a minute and try again."
+      : category === "configuration" || category === "model"
+        ? "The photo inspector needs a configuration update. Your photo was not saved. Please contact the site owner."
+        : "The photo inspector could not finish checking your photo. Your photo was not saved. Please try again shortly.";
+    res.status(502).json({ error: message });
     return;
   }
   if (!isApproved(inspection)) {
