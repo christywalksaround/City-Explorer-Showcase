@@ -120,6 +120,24 @@
         <ul class="dish-grid" id="dish-grid" aria-busy="true" aria-label="Shared dish photos"></ul>
       </section>
 
+      <section class="inspiration-section section-shell" id="inspiration" aria-labelledby="inspiration-title">
+        <div class="inspiration-heading">
+          <div>
+            <p class="eyebrow">A LITTLE FOOD INSPIRATION</p>
+            <h2 id="inspiration-title">Inspiration Grid</h2>
+            <p>Explore food photography from Unsplash, inspired by our city's favorite dish. If the exact dish has no matches, we show general crawfish inspiration. These stock photos are not verified Houston dishes or inspector-approved uploads.</p>
+          </div>
+          <button class="dish-refresh" id="inspiration-refresh" type="button">Refresh Inspiration</button>
+        </div>
+        <p id="inspiration-status" role="status" aria-live="polite"></p>
+        <ul class="inspiration-grid" id="inspiration-grid" aria-label="Food inspiration photos"></ul>
+        <dialog id="inspiration-dialog" aria-label="Expanded inspiration photo">
+          <button id="inspiration-close" type="button" autofocus>Close photo</button>
+          <img id="inspiration-expanded" alt="">
+          <p id="inspiration-credit"></p>
+        </dialog>
+      </section>
+
       <section class="facts-section" id="facts" aria-labelledby="facts-title">
         <div class="facts-inner">
           <div class="facts-heading">

@@ -587,3 +587,92 @@ dishForm.addEventListener("submit", async (event) => {
 
 dishRefresh.addEventListener("click", loadDishes);
 loadDishes();
+
+// Unsplash photos stay separate from the community's inspected uploads.
+const inspirationGrid = document.querySelector("#inspiration-grid");
+const inspirationStatus = document.querySelector("#inspiration-status");
+const inspirationRefresh = document.querySelector("#inspiration-refresh");
+const inspirationDialog = document.querySelector("#inspiration-dialog");
+const inspirationExpanded = document.querySelector("#inspiration-expanded");
+
+function photoCredit(photo) {
+  const credit = document.createElement("p");
+  const photographer = document.createElement("a");
+  photographer.textContent = photo.photographerName;
+  photographer.href = photo.photographerProfileUrl;
+  photographer.target = "_blank";
+  photographer.rel = "noopener noreferrer";
+  const unsplash = document.createElement("a");
+  unsplash.textContent = "Unsplash";
+  unsplash.href = "https://unsplash.com/?utm_source=houston_city_guide&utm_medium=referral";
+  unsplash.target = "_blank";
+  unsplash.rel = "noopener noreferrer";
+  credit.append("Photo by ", photographer, " on ", unsplash);
+  return credit;
+}
+
+async function expandInspiration(photo, button) {
+  button.disabled = true;
+  inspirationStatus.textContent = "Opening photo…";
+  try {
+    // Unsplash requires download tracking for an explicit expand/use action.
+    const response = await fetch("/api/unsplash/download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ downloadLocation: photo.downloadLocation }),
+    });
+    if (!response.ok) throw new Error(await readError(response, "Could not open this photo."));
+    const expandedUrl = new URL(photo.rawUrl);
+    expandedUrl.searchParams.set("w", "2000");
+    expandedUrl.searchParams.set("fit", "max");
+    expandedUrl.searchParams.set("auto", "format");
+    inspirationExpanded.src = expandedUrl.toString();
+    inspirationExpanded.alt = photo.altText;
+    document.querySelector("#inspiration-credit").replaceChildren(...photoCredit(photo).childNodes);
+    inspirationDialog.showModal();
+    inspirationStatus.textContent = "";
+  } catch (error) {
+    inspirationStatus.textContent = error.message || "Could not open this photo. Please try again.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function loadInspiration() {
+  inspirationRefresh.disabled = true;
+  inspirationGrid.setAttribute("aria-busy", "true");
+  inspirationStatus.textContent = "Finding food inspiration on Unsplash…";
+  try {
+    const response = await fetch("/api/unsplash/dish-inspiration");
+    if (!response.ok) throw new Error(await readError(response, "Could not load food inspiration."));
+    const photos = await response.json();
+    const cards = photos.map((photo) => {
+      const card = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "inspiration-photo";
+      button.setAttribute("aria-label", `Expand photo: ${photo.altText}`);
+      const image = document.createElement("img");
+      image.src = photo.imageUrl;
+      image.alt = photo.altText;
+      image.loading = "lazy";
+      image.width = 1080;
+      image.height = 810;
+      button.append(image);
+      button.addEventListener("click", () => expandInspiration(photo, button));
+      card.append(button, photoCredit(photo));
+      return card;
+    });
+    inspirationGrid.replaceChildren(...cards);
+    inspirationStatus.textContent = photos.length ? "Select a photo to take a closer look." : "Unsplash has no photos for this dish yet. Try refreshing later.";
+  } catch (error) {
+    inspirationStatus.textContent = error.message || "Food inspiration couldn't be loaded. Please try again.";
+  } finally {
+    inspirationGrid.setAttribute("aria-busy", "false");
+    inspirationRefresh.disabled = false;
+  }
+}
+
+document.querySelector("#inspiration-close").addEventListener("click", () => inspirationDialog.close());
+inspirationRefresh.addEventListener("click", loadInspiration);
+loadInspiration();

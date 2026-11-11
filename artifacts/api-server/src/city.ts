@@ -5,6 +5,8 @@
 export const cityGuideSettings = {
   city: "Houston",
   state: "Texas",
+  favoriteDish: "Viet-Cajun crawfish",
+  inspirationFallbackQuery: "crawfish",
   voice:
     "a big-hearted, many-flavored Houston local who is always a little surprising",
   model: process.env["GEMINI_MODEL"]?.trim() || "gemini-3.5-flash-lite",

@@ -8,6 +8,25 @@
 import * as zod from 'zod';
 
 
+export const GetDishInspirationResponseItem = zod.object({
+  "id": zod.string(),
+  "imageUrl": zod.string(),
+  "rawUrl": zod.string(),
+  "altText": zod.string(),
+  "photographerName": zod.string(),
+  "photographerProfileUrl": zod.string(),
+  "downloadLocation": zod.string()
+})
+export const GetDishInspirationResponse = zod.array(GetDishInspirationResponseItem)
+
+
+export const TrackInspirationDownloadBody = zod.object({
+  "downloadLocation": zod.string()
+})
+
+export const TrackInspirationDownloadResponse = zod.void()
+
+
 export const ListDishesResponseItem = zod.object({
   "id": zod.number().int(),
   "title": zod.string(),

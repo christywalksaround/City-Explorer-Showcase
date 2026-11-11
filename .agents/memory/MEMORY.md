@@ -1,2 +1,3 @@
 - [Gemini model selection](gemini-model-selection.md) — validate model IDs against the direct Google API key and preserve the `GEMINI_MODEL` override.
 - [Dish photo storage](dish-photo-storage.md) — database image storage is an explicit user requirement, not an accidental alternative to App Storage.
+- [Unsplash inspiration scope](unsplash-inspiration.md) — general crawfish photos are approved when the exact local dish search is empty; disclose their scope.

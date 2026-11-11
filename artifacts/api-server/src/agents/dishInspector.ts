@@ -3,7 +3,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import { cityGuideSettings } from "../city";
 
-export const CITY_DISH = "Viet-Cajun crawfish";
+export const CITY_DISH = cityGuideSettings.favoriteDish;
 export const inspectionSchema = z.object({
   isMatch: z.boolean(),
   confidence: z.number().min(0).max(1),

@@ -13,6 +13,40 @@ tags:
   - name: chat
     description: Houston city-guide chat
 paths:
+  /unsplash/dish-inspiration:
+    get:
+      operationId: getDishInspiration
+      responses:
+        "200":
+          description: Up to six live Unsplash food photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InspirationPhoto"
+        "503":
+          description: Unsplash access key needs configuration
+        "502":
+          description: Unsplash temporarily unavailable
+  /unsplash/download:
+    post:
+      operationId: trackInspirationDownload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InspirationDownload"
+      responses:
+        "204":
+          description: Unsplash download event recorded
+        "400":
+          description: Invalid download location
+        "503":
+          description: Unsplash access key needs configuration
+        "502":
+          description: Unsplash temporarily unavailable
   /dishes:
     get:
       operationId: listDishes
@@ -141,6 +175,22 @@ paths:
                 $ref: "#/components/schemas/ChatSystemPrompt"
 components:
   schemas:
+    InspirationDownload:
+      type: object
+      required: [downloadLocation]
+      properties:
+        downloadLocation: { type: string }
+    InspirationPhoto:
+      type: object
+      required: [id, imageUrl, rawUrl, altText, photographerName, photographerProfileUrl, downloadLocation]
+      properties:
+        id: { type: string }
+        imageUrl: { type: string }
+        rawUrl: { type: string }
+        altText: { type: string }
+        photographerName: { type: string }
+        photographerProfileUrl: { type: string }
+        downloadLocation: { type: string }
     DishRejection:
       type: object
       required: [error, reason]

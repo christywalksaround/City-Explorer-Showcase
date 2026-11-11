@@ -5,6 +5,20 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface InspirationDownload {
+  downloadLocation: string;
+}
+
+export interface InspirationPhoto {
+  id: string;
+  imageUrl: string;
+  rawUrl: string;
+  altText: string;
+  photographerName: string;
+  photographerProfileUrl: string;
+  downloadLocation: string;
+}
+
 export interface DishRejection {
   error: string;
   reason: string;

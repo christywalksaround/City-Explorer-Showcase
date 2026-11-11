@@ -18,3 +18,5 @@ export * from './dishInput';
 export * from './dishPhoto';
 export * from './dishRejection';
 export * from './healthStatus';
+export * from './inspirationDownload';
+export * from './inspirationPhoto';
